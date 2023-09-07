@@ -71,7 +71,7 @@ func Adapter(opts ...Option) (func(http.Handler) http.Handler, error) {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			addVaryHeader(w.Header(), acceptEncoding)
 
-			accept := parseEncodings(r.Header.Get(acceptEncoding))
+			accept := parseEncodings(r.Header.Values(acceptEncoding))
 			common := acceptedCompression(accept, c.compressor)
 			if len(common) == 0 {
 				h.ServeHTTP(w, r)

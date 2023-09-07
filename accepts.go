@@ -39,14 +39,16 @@ func acceptedCompression(accept codings, comps comps) []string {
 // Errors encountered during parsing the codings are ignored.
 //
 // See: http://tools.ietf.org/html/rfc2616#section-14.3.
-func parseEncodings(s string) codings {
+func parseEncodings(vv []string) codings {
 	c := make(codings)
-	for _, ss := range strings.Split(s, ",") {
-		coding, qvalue := parseCoding(ss)
-		if coding == "" {
-			continue
+	for _, v := range vv {
+		for _, sv := range strings.Split(v, ",") {
+			coding, qvalue := parseCoding(sv)
+			if coding == "" {
+				continue
+			}
+			c[coding] = qvalue
 		}
-		c[coding] = qvalue
 	}
 	return c
 }
