@@ -1,6 +1,6 @@
 module github.com/CAFxX/httpcompression/contrib/gin-gonic/gin
 
-go 1.17
+go 1.18
 
 require (
 	github.com/CAFxX/httpcompression v0.0.8
