@@ -110,6 +110,7 @@ The `contrib/` directory contains a number of bundled implementations that are r
 | `brotli`           | [contrib/andybalholm/brotli](https://pkg.go.dev/github.com/CAFxX/httpcompression/contrib/andybalholm/brotli) | [github.com/andybalholm/brotli](https://github.com/andybalholm/brotli)      | Slower than google/brotli                 | No         | Go     | Yes     | Yes             |
 | `brotli`           | [contrib/google/cbrotli](https://pkg.go.dev/github.com/CAFxX/httpcompression/contrib/google/cbrotli)         | [github.com/google/brotli](https://github.com/google/brotli)                | Requires brotli libraries to be installed | No         | cgo    | No      | Yes             |
 | `lz4`              | [contrib/pierrec/lz4](https://pkg.go.dev/github.com/CAFxX/httpcompression/contrib/pierrec/lz4)               | [github.com/pierrec/lz4/v4](https://github.com/pierrec/lz4)                 |                                           | No         | Go     | No      | No              |
+| `xz`               | [contrib/ulikunitz/xz](https://pkg.go.dev/github.com/CAFxX/httpcompression/contrib/ulikunitz/xz)             | [github.com/ulikunitz/xz](https://github.com/ulikunitz/xz)                  |                                           | No         | Go     | No      | No              |
 
 ## Framework integration
 
