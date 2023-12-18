@@ -10,14 +10,20 @@ import (
 	"sync"
 )
 
-// compressWriter provides an http.ResponseWriter interface, which gzips
+var (
+	// ErrHijackerNotSupported indicates that a provided http.ResponseWriter does not implement
+	// http.Hijacker and can be therefore not be called by wrapped responses.
+	ErrHijackerNotSupported = fmt.Errorf("http.Hijacker interface is not supported")
+)
+
+// compressWriter provides a http.ResponseWriter interface, which gzips
 // bytes before writing them to the underlying response. This doesn't close the
 // writers, so don't forget to do that.
 // It can be configured to skip response smaller than minSize.
 type compressWriter struct {
 	http.ResponseWriter
 
-	config config
+	config *config
 	accept codings
 	common []string
 	pool   *sync.Pool // pool of buffers (buf []byte); max size of each buf is maxBuf
@@ -51,6 +57,20 @@ var (
 )
 
 const maxBuf = 1 << 16 // maximum size of recycled buffer
+
+func (w *compressWriter) configure(rw http.ResponseWriter, accept codings, common []string) {
+	w.ResponseWriter = rw
+	w.accept = accept
+	w.common = common
+	w.w = nil
+}
+
+func (w *compressWriter) clean() {
+	w.ResponseWriter = nil
+	w.accept = nil
+	w.common = nil
+	w.w = nil
+}
 
 // Write compresses and appends the given byte slice to the underlying ResponseWriter.
 func (w *compressWriter) Write(b []byte) (int, error) {
@@ -105,7 +125,7 @@ func (w *compressWriter) Write(b []byte) (int, error) {
 				ct = http.DetectContentType(*w.buf)
 				if ct != "" {
 					// net/http by default performs content sniffing but this is disabled if content-encoding is set.
-					// Since we set content-encoding, if content-type was not set and we successfully sniffed it,
+					// Since we set content-encoding, if content-type was not set, and we successfully sniffed it,
 					// set the content-type.
 					w.Header().Set(contentType, ct)
 				}
@@ -210,9 +230,9 @@ func (w *compressWriter) startPlain(buf []byte) error {
 		return nil
 	}
 	n, err := w.ResponseWriter.Write(buf)
-	// This should never happen (per io.Writer docs), but if the write didn't
-	// accept the entire buffer but returned no specific error, we have no clue
-	// what's going on, so abort just to be safe.
+	// This should never happen (per io.Writer docs), but if the write operation
+	// didn't accept the entire buffer but returned no specific error, we have no
+	// clue what's going on, so abort just to be safe.
 	if err == nil && n < len(buf) {
 		err = io.ErrShortWrite
 	}
@@ -269,7 +289,7 @@ func (w *compressWriter) Flush() {
 	// - in case we are bypassing compression, w.w is the parent ResponseWriter, and therefore we skip
 	//   this as the parent ResponseWriter does not implement Flusher.
 	// - in case we are NOT bypassing compression, w.w is the compressor, and therefore we flush the
-	//   compressor and then we flush the parent ResponseWriter.
+	//   compressor, and then we flush the parent ResponseWriter.
 	if fw, ok := w.w.(Flusher); ok {
 		_ = fw.Flush()
 	}
@@ -281,21 +301,16 @@ func (w *compressWriter) Flush() {
 }
 
 // Hijack implements http.Hijacker. If the underlying ResponseWriter is a
-// Hijacker, its Hijack method is returned. Otherwise an error is returned.
+// Hijacker, its Hijack method is returned. Otherwise, an error is returned.
 func (w *compressWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	if hj, ok := w.ResponseWriter.(http.Hijacker); ok {
 		return hj.Hijack()
 	}
-	return nil, nil, fmt.Errorf("http.Hijacker interface is not supported")
+	return nil, nil, ErrHijackerNotSupported
 }
 
 func (w *compressWriter) getBuffer() *[]byte {
-	b := w.pool.Get()
-	if b == nil {
-		var s []byte
-		return &s
-	}
-	return b.(*[]byte)
+	return w.pool.Get().(*[]byte)
 }
 
 func (w *compressWriter) recycleBuffer() {
