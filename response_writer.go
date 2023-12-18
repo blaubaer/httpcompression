@@ -23,10 +23,11 @@ var (
 type compressWriter struct {
 	http.ResponseWriter
 
-	config *config
-	accept codings
-	common []string
-	pool   *sync.Pool // pool of buffers (buf []byte); max size of each buf is maxBuf
+	config  *config
+	minSize int
+	accept  codings
+	common  []string
+	pool    *sync.Pool // pool of buffers (buf []byte); max size of each buf is maxBuf
 
 	w    io.Writer
 	enc  string
@@ -58,8 +59,14 @@ var (
 
 const maxBuf = 1 << 16 // maximum size of recycled buffer
 
-func (w *compressWriter) configure(rw http.ResponseWriter, accept codings, common []string) {
+func (w *compressWriter) configure(
+	rw http.ResponseWriter,
+	minSize int,
+	accept codings,
+	common []string,
+) {
 	w.ResponseWriter = rw
+	w.minSize = minSize
 	w.accept = accept
 	w.common = common
 	w.w = nil
@@ -67,6 +74,7 @@ func (w *compressWriter) configure(rw http.ResponseWriter, accept codings, commo
 
 func (w *compressWriter) clean() {
 	w.ResponseWriter = nil
+	w.minSize = 0
 	w.accept = nil
 	w.common = nil
 	w.w = nil
@@ -91,8 +99,8 @@ func (w *compressWriter) Write(b []byte) (int, error) {
 	// Fast path: we have enough information to know whether we will compress
 	// or not this response from the first write, so we don't need to buffer
 	// writes to defer the decision until we have more data.
-	if w.buf == nil && (ct != "" || len(w.config.contentTypes) == 0) && (cl > 0 || len(b) >= w.config.minSize) {
-		if ce == "" && (cl >= w.config.minSize || len(b) >= w.config.minSize) && handleContentType(ct, w.config.contentTypes, w.config.blacklist) {
+	if w.buf == nil && (ct != "" || len(w.config.contentTypes) == 0) && (cl > 0 || len(b) >= w.minSize) {
+		if ce == "" && (cl >= w.minSize || len(b) >= w.minSize) && handleContentType(ct, w.config.contentTypes, w.config.blacklist) {
 			enc := preferredEncoding(w.accept, w.config.compressor, w.common, w.config.prefer)
 			if err := w.startCompress(enc, b); err != nil {
 				return 0, err
@@ -113,13 +121,13 @@ func (w *compressWriter) Write(b []byte) (int, error) {
 	*w.buf = append(*w.buf, b...)
 
 	// Only continue if they didn't already choose an encoding or a known unhandled content length or type.
-	if ce == "" && (cl == 0 || cl >= w.config.minSize) && (ct == "" || handleContentType(ct, w.config.contentTypes, w.config.blacklist)) {
+	if ce == "" && (cl == 0 || cl >= w.minSize) && (ct == "" || handleContentType(ct, w.config.contentTypes, w.config.blacklist)) {
 		// If the current buffer is less than minSize and a Content-Length isn't set, then wait until we have more data.
-		if len(*w.buf) < w.config.minSize && cl == 0 {
+		if len(*w.buf) < w.minSize && cl == 0 {
 			return len(b), nil
 		}
 		// If the Content-Length is larger than minSize or the current buffer is larger than minSize, then continue.
-		if cl >= w.config.minSize || len(*w.buf) >= w.config.minSize {
+		if cl >= w.minSize || len(*w.buf) >= w.minSize {
 			// If a Content-Type wasn't specified, infer it from the current buffer.
 			if ct == "" {
 				ct = http.DetectContentType(*w.buf)

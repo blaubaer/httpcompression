@@ -1,4 +1,4 @@
-package httpcompression // import "github.com/CAFxX/httpcompression"
+package httpcompression
 
 import (
 	"net/http"
@@ -23,15 +23,15 @@ const (
 // is a no-op.
 // An error will be returned if invalid options are given.
 func Adapter(opts ...Option) (func(http.Handler) http.Handler, error) {
-	wrapper, err := NewResponseWriterWrapper(opts...)
+	f, err := NewResponseWriterFactory(opts...)
 	if err != nil {
 		return nil, err
 	}
-	return adapter(wrapper)
+	return adapter(f)
 }
 
-func adapter(wrapper *ResponseWriterWrapper) (func(http.Handler) http.Handler, error) {
-	if wrapper.AmountOfCompressors() == 0 {
+func adapter(f *ResponseWriterFactoryFactory) (func(http.Handler) http.Handler, error) {
+	if f.AmountOfCompressors() == 0 {
 		// No compressors have been configured, so there is no useful work
 		// that this adapter can do.
 		return func(h http.Handler) http.Handler {
@@ -41,15 +41,15 @@ func adapter(wrapper *ResponseWriterWrapper) (func(http.Handler) http.Handler, e
 
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-			ww, _, finalizer, err := wrapper.Wrap(rw, req)
+			ww, finalizer, err := f.Create(rw, req)
 			if err != nil {
-				wrapper.config.handleError(rw, req, err)
+				f.config.handleError(rw, req, err)
 				return
 			}
 
 			defer func() {
 				if err := finalizer(); err != nil {
-					wrapper.config.handleError(rw, req, err)
+					f.config.handleError(rw, req, err)
 				}
 			}()
 
@@ -74,9 +74,9 @@ func addVaryHeader(h http.Header, value string) {
 // The defaults are not guaranteed to remain constant over time: if you want to avoid this
 // use Adapter directly.
 func DefaultAdapter(opts ...Option) (func(http.Handler) http.Handler, error) {
-	wrapper, err := NewDefaultResponseWriterWrapper(opts...)
+	f, err := NewDefaultResponseWriterFactory(opts...)
 	if err != nil {
 		return nil, err
 	}
-	return adapter(wrapper)
+	return adapter(f)
 }

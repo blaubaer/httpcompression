@@ -600,6 +600,71 @@ func TestGzipHandlerMinSize(t *testing.T) {
 	}
 }
 
+func TestGzipHandlerMinSizeRequestFunc(t *testing.T) {
+	t.Parallel()
+
+	responseLength := 0
+	b := []byte{'x'}
+
+	adapter, _ := DefaultAdapter(MinSizeRequestFunc(func(req *http.Request) (int, error) {
+		return 128, nil
+	}))
+	handler := adapter(http.HandlerFunc(
+		func(w http.ResponseWriter, r *http.Request) {
+			// Write responses one byte at a time to ensure that the flush
+			// mechanism, if used, is working properly.
+			for i := 0; i < responseLength; i++ {
+				n, err := w.Write(b)
+				assert.Equal(t, 1, n)
+				assert.Nil(t, err)
+			}
+		},
+	))
+
+	r, _ := http.NewRequest("GET", "/whatever", &bytes.Buffer{})
+	r.Header.Add("Accept-Encoding", "gzip")
+
+	// Short response is not compressed
+	responseLength = 127
+	w := httptest.NewRecorder()
+	handler.ServeHTTP(w, r)
+	if w.Result().Header.Get(contentEncoding) == "gzip" {
+		t.Error("Expected uncompressed response, got compressed")
+	}
+
+	// Long response is compressed
+	responseLength = 128
+	w = httptest.NewRecorder()
+	handler.ServeHTTP(w, r)
+	if w.Result().Header.Get(contentEncoding) != "gzip" {
+		t.Error("Expected compressed response, got uncompressed")
+	}
+}
+
+func TestFailGzipHandlerMinSizeRequestFunc(t *testing.T) {
+	t.Parallel()
+
+	expectedError := errors.New("expected")
+	var actualError error
+	adapter, _ := DefaultAdapter(
+		MinSizeRequestFunc(func(req *http.Request) (int, error) {
+			return 0, expectedError
+		}),
+		ErrorHandler(func(_ http.ResponseWriter, _ *http.Request, err error) {
+			actualError = err
+		}),
+	)
+
+	handler := adapter(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}))
+	r, _ := http.NewRequest("GET", "/whatever", &bytes.Buffer{})
+	r.Header.Add("Accept-Encoding", "gzip")
+	w := httptest.NewRecorder()
+
+	handler.ServeHTTP(w, r)
+
+	assert.ErrorIs(t, actualError, expectedError)
+}
+
 type panicOnSecondWriteHeaderWriter struct {
 	http.ResponseWriter
 	headerWritten bool
