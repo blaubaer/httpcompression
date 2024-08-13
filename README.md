@@ -29,13 +29,6 @@ is significantly wider than the original package.**
 - Custom dictionary compression for zstd and deflate
 - Low memory alliocations via transparent encoder reuse
 
-## Demo
-
-While no dedicated demo exists, the [demo website](https://regexp2go-demo.herokuapp.com/)
-for [regexp2go](https://github.com/CAFxX/regexp2go) internally 
-[uses](https://github.com/CAFxX/regexp2go/blob/main/internal/server.go)
-`httpcompression` to transparently compress responses.
-
 ## Install
 
 ```bash
