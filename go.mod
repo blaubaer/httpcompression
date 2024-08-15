@@ -5,7 +5,7 @@ go 1.11
 require (
 	github.com/andybalholm/brotli v1.0.6
 	github.com/google/brotli/go/cbrotli v0.0.0-20230829110029-ed738e842d2f
-	github.com/klauspost/compress v1.17.4
+	github.com/klauspost/compress v1.17.9
 	github.com/klauspost/pgzip v1.2.6
 	github.com/pierrec/lz4/v4 v4.1.19
 	github.com/stretchr/testify v1.8.4
