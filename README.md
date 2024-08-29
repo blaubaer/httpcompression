@@ -29,13 +29,6 @@ is significantly wider than the original package.**
 - Custom dictionary compression for zstd and deflate
 - Low memory alliocations via transparent encoder reuse
 
-## Demo
-
-While no dedicated demo exists, the [demo website](https://regexp2go-demo.herokuapp.com/)
-for [regexp2go](https://github.com/CAFxX/regexp2go) internally 
-[uses](https://github.com/CAFxX/regexp2go/blob/main/internal/server.go)
-`httpcompression` to transparently compress responses.
-
 ## Install
 
 ```bash
@@ -100,17 +93,17 @@ The `contrib/` directory contains a number of bundled implementations that are r
 
 | `Content-Encoding` | Provider package                                                                                             | Implementation package                                                      | Notes                                     | Dictionary | Go/cgo | Default | [IANA registry] |
 | ------------------ | ------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------- | ----------------------------------------- | ---------- | ------ | ------- | --------------- |
-| `deflate`          | [contrib/compress/zlib](https://pkg.go.dev/github.com/CAFxX/httpcompression/contrib/compress/zlib)           | compress/zlib                                                               | Slower than klauspost/zlib                | Yes        | Go     | Yes     | Yes             |
-| `deflate`          | [contrib/klauspost/zlib](https://pkg.go.dev/github.com/CAFxX/httpcompression/contrib/klauspost/zlib)         | [github.com/klauspost/compress/zlib](https://github.com/klauspost/compress) |                                           | Yes        | Go     | No      | Yes             |
-| `gzip`             | [contrib/compress/gzip](https://pkg.go.dev/github.com/CAFxX/httpcompression/contrib/compress/gzip)           | compress/gzip                                                               | Slower than klauspost/gzip                | No         | Go     | Yes     | Yes             |
-| `gzip`             | [contrib/klauspost/gzip](https://pkg.go.dev/github.com/CAFxX/httpcompression/contrib/klauspost/gzip)         | [github.com/klauspost/compress/gzip](https://github.com/klauspost/compress) |                                           | No         | Go     | No      | Yes             |
-| `gzip`             | [contrib/klauspost/pgzip](https://pkg.go.dev/github.com/CAFxX/httpcompression/contrib/klauspost/pgzip)       | [github.com/klauspost/pgzip](https://github.com/klauspost/pgzip)            | Parallel compression                      | No         | Go     | No      | Yes             |
-| `zstd`             | [contrib/klauspost/zstd](https://pkg.go.dev/github.com/CAFxX/httpcompression/contrib/klauspost/zstd)         | [github.com/klauspost/compress/zstd](https://github.com/klauspost/compress) |                                           | Yes        | Go     | Yes     | Yes             |
-| `zstd`             | [contrib/valyala/gozstd](https://pkg.go.dev/github.com/CAFxX/httpcompression/contrib/valyala/gozstd)         | [github.com/valyala/gozstd](https://github.com/valyala/gozstd)              | Slower than klauspost/zstd                | Yes        | cgo    | No      | Yes             |
-| `brotli`           | [contrib/andybalholm/brotli](https://pkg.go.dev/github.com/CAFxX/httpcompression/contrib/andybalholm/brotli) | [github.com/andybalholm/brotli](https://github.com/andybalholm/brotli)      | Slower than google/brotli                 | No         | Go     | Yes     | Yes             |
-| `brotli`           | [contrib/google/cbrotli](https://pkg.go.dev/github.com/CAFxX/httpcompression/contrib/google/cbrotli)         | [github.com/google/brotli](https://github.com/google/brotli)                | Requires brotli libraries to be installed | No         | cgo    | No      | Yes             |
-| `lz4`              | [contrib/pierrec/lz4](https://pkg.go.dev/github.com/CAFxX/httpcompression/contrib/pierrec/lz4)               | [github.com/pierrec/lz4/v4](https://github.com/pierrec/lz4)                 |                                           | No         | Go     | No      | No              |
-| `xz`               | [contrib/ulikunitz/xz](https://pkg.go.dev/github.com/CAFxX/httpcompression/contrib/ulikunitz/xz)             | [github.com/ulikunitz/xz](https://github.com/ulikunitz/xz)                  |                                           | No         | Go     | No      | No              |
+| `deflate`          | [contrib/compress/zlib](https://pkg.go.dev/github.com/CAFxX/httpcompression/contrib/compress/zlib)           | compress/zlib                                                               | Slower than klauspost/zlib                | ✅          | Go     | ✅       | ✅               |
+| `deflate`          | [contrib/klauspost/zlib](https://pkg.go.dev/github.com/CAFxX/httpcompression/contrib/klauspost/zlib)         | [github.com/klauspost/compress/zlib](https://github.com/klauspost/compress) |                                           | ✅          | Go     |         | ✅               |
+| `gzip`             | [contrib/compress/gzip](https://pkg.go.dev/github.com/CAFxX/httpcompression/contrib/compress/gzip)           | compress/gzip                                                               | Slower than klauspost/gzip                |            | Go     | ✅       | ✅               |
+| `gzip`             | [contrib/klauspost/gzip](https://pkg.go.dev/github.com/CAFxX/httpcompression/contrib/klauspost/gzip)         | [github.com/klauspost/compress/gzip](https://github.com/klauspost/compress) |                                           |            | Go     |         | ✅               |
+| `gzip`             | [contrib/klauspost/pgzip](https://pkg.go.dev/github.com/CAFxX/httpcompression/contrib/klauspost/pgzip)       | [github.com/klauspost/pgzip](https://github.com/klauspost/pgzip)            | Parallel compression                      |            | Go     |         | ✅               |
+| `zstd`             | [contrib/klauspost/zstd](https://pkg.go.dev/github.com/CAFxX/httpcompression/contrib/klauspost/zstd)         | [github.com/klauspost/compress/zstd](https://github.com/klauspost/compress) |                                           | ✅          | Go     | ✅       | ✅               |
+| `zstd`             | [contrib/valyala/gozstd](https://pkg.go.dev/github.com/CAFxX/httpcompression/contrib/valyala/gozstd)         | [github.com/valyala/gozstd](https://github.com/valyala/gozstd)              | Slower than klauspost/zstd                | ✅          | cgo    |         | ✅               |
+| `brotli`           | [contrib/andybalholm/brotli](https://pkg.go.dev/github.com/CAFxX/httpcompression/contrib/andybalholm/brotli) | [github.com/andybalholm/brotli](https://github.com/andybalholm/brotli)      | Slower than google/brotli                 |            | Go     | ✅       | ✅               |
+| `brotli`           | [contrib/google/cbrotli](https://pkg.go.dev/github.com/CAFxX/httpcompression/contrib/google/cbrotli)         | [github.com/google/brotli](https://github.com/google/brotli)                | Requires brotli libraries to be installed |            | cgo    |         | ✅               |
+| `lz4`              | [contrib/pierrec/lz4](https://pkg.go.dev/github.com/CAFxX/httpcompression/contrib/pierrec/lz4)               | [github.com/pierrec/lz4/v4](https://github.com/pierrec/lz4)                 |                                           |            | Go     |         |                 |
+| `xz`               | [contrib/ulikunitz/xz](https://pkg.go.dev/github.com/CAFxX/httpcompression/contrib/ulikunitz/xz)             | [github.com/ulikunitz/xz](https://github.com/ulikunitz/xz)                  |                                           |            | Go     |         |                 |
 
 ## Framework integration
 
